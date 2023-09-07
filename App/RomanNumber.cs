@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace App
+﻿namespace App
 {
     public class RomanNumber
     {
@@ -41,7 +35,7 @@ namespace App
                     'D' => 500,
                     'M' => 1000,
                     'N' => 0,
-                    _ => throw new ArgumentException(" 'A'B' ")
+                    _ => throw new ArgumentException($"'{input}'Parse Error Invalid digit: '{input[i]}'")
                 };
 
                 result += (current < prev) ? -current : current;
@@ -50,4 +44,6 @@ namespace App
             return new RomanNumber() { Value = result * (1 - (first_digit_index << 1)) };
         }
     }
+
+
 }
