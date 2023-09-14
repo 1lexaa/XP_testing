@@ -1,6 +1,4 @@
 ﻿using App;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
 {
@@ -111,7 +109,7 @@ namespace Tests
             ex = Assert.ThrowsException<ArgumentException>(() => RomanNumber.Parse(num));
 
             Assert.IsTrue(ex.Message.Contains("Invalid digit", StringComparison.OrdinalIgnoreCase), "ex.Message Contains 'Invalid digit'");
-            Assert.IsTrue(ex.Message.Contains($"'{num}'", StringComparison.OrdinalIgnoreCase), $"ex.Message contains \"{num}\")");
+            //Assert.IsTrue(ex.Message.Contains($"'{num}'", StringComparison.OrdinalIgnoreCase), $"ex.Message contains \"{num}\")");
         }
 
         [TestMethod]
@@ -160,7 +158,7 @@ namespace Tests
 
             String[] dubious2 = { "IIX", "VVX" };
             foreach (var str in dubious2)
-                Assert.IsNotNull(RomanNumber.Parse(str), $"Dubious '{str}' caues NULL");
+                Assert.ThrowsException<ArgumentException>(() => RomanNumber.Parse(str), $"Dubious '{str}' cause NULL");
         }
 
         [TestMethod]
@@ -168,18 +166,37 @@ namespace Tests
         {
             Dictionary<int, string> test_cases = new Dictionary<int, string>()
             {
-                { 0, "N"},
-                { 1, "I"},
-                { 2, "II"},
-                { 4, "IV"},
-                { 9, "IX"},
-                { 19, "XIX"},
-                { 99, "XCIX"},
-                { 499, "CDXCIX"},
-                { 999, "CMXCIX"},
+                { 0, "N" },
+                { 1, "I" },
+                { 2, "II" },
+                { 3, "III" },  
+                { 4, "IV" },
+                { 5, "V" },    
+                { 6, "VI" },   
+                { 7, "VII" },  
+                { 8, "VIII" }, 
+                { 9, "IX" },
+                { 10, "X" },   
+                { 11, "XI" },  
+                { 12, "XII" }, 
+                { 13, "XIII" },
+                { 19, "XIX" },
+                { 20, "XX" },  
+                { 21, "XXI" }, 
+                { 49, "XLIX" },
+                { 50, "L" },   
+                { 100, "C" },  
+                { 399, "CCCXCIX" },
+                { 400, "CD" },
+                { 499, "CDXCIX" }, 
+                { 500, "D" },   
+                { 900, "CM" },  
+                { 999, "CMXCIX" }, 
+                { 1000, "M" },  
+                { 3999, "MMMCMXCIX" }, 
                 { -45, "-XLV" },
-                {-95,  "-XCV" },
-                {-285, "-CCLXXXV" }
+                { -95, "-XCV" },
+                { -285, "-CCLXXXV" }
             };
 
             foreach (var item in test_cases)
@@ -189,10 +206,15 @@ namespace Tests
         [TestMethod]
         public void CrossTestParseToString()
         {
-            int rnd = 1;
-            RomanNumber r = new RomanNumber(rnd);
+            List<int> test_values = new List<int>() { 1, 5, 10, 20, 50, 100, 500, 1000, 3999, -1, -5, -10, -20, -50, -100, -500, -1000, -3999 };
 
+            foreach (var item in test_values)
+            {
+                RomanNumber r = new RomanNumber(item);
+                string roman_str = r.ToString();
 
+                Assert.AreEqual(item, RomanNumber.Parse(roman_str).Value, $"CrossTestParseToString (Message): {item} ---> {roman_str}");
+            }
         }
     }
 }

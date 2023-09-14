@@ -8,76 +8,136 @@ namespace App
 {
     public class RomanNumber
     {
-        public int Value { get; set; }
-        private static Dictionary<char, int> roman_values = new Dictionary<char, int>
-        {
-            { 'I', 1 },
-            { 'V', 5 },
-            { 'X', 10 },
-            { 'L', 50 },
-            { 'C', 100 },
-            { 'D', 500 },
-            { 'M', 1000 }
-        };
+        private const char ZERO_DIGIT = 'N';
+        private const string MINUS_SIGN = "-";
+        private const string INVALID_DIGIT_MESSAGE = "Invalid digit";
+        private const string INVALID_ROMAN_STRUCTURE_MESSAGE = "Invalid roman number structure";
+        private const string EMPTY_OR_NULL_INPUT_MESSAGE = "Empty or NULL input";
+        private const string INVALID_DIGIT_SEPARATOR = ", ";
+        private const string DIGIT_FORMAT = "'{0}'";
 
-        public RomanNumber(int value = 0) 
+        public int Value { get; set; }
+
+        private static readonly Dictionary<char, int> roman_values = new Dictionary<char, int>
+    {
+        { 'I', 1 },
+        { 'V', 5 },
+        { 'X', 10 },
+        { 'L', 50 },
+        { 'C', 100 },
+        { 'D', 500 },
+        { 'M', 1000 }
+    };
+
+        public RomanNumber(int value = 0)
         {
             Value = value;
         }
 
-        public static RomanNumber Parse(String input)
+        private static int DigitValue(char digit)
         {
-            if (String.IsNullOrEmpty(input))
-                throw new ArgumentException("Empty or NULL input");
+            return digit switch
+            {
+                'I' => 1,
+                'V' => 5,
+                'X' => 10,
+                'L' => 50,
+                'C' => 100,
+                'D' => 500,
+                'M' => 1000,
+                ZERO_DIGIT => 0,
+                _ => throw new ArgumentException($"{INVALID_DIGIT_MESSAGE} {string.Format(DIGIT_FORMAT, digit)}")
+            };
+        }
 
-            input = input?.Trim()!;
+        private static void CheckValidityOrThrow(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                throw new ArgumentException(EMPTY_OR_NULL_INPUT_MESSAGE);
 
-            if (input == String.Empty)
-                throw new ArgumentException("Empty input");
+            int firstDigitIndex = input.StartsWith(MINUS_SIGN) ? 1 : 0;
 
+            List<char> invalidChars = new List<char>();
+            for (int i = input.Length - 1; i >= firstDigitIndex; i--)
+            {
+                try { DigitValue(input[i]); }
+                catch { invalidChars.Add(input[i]); }
+            }
+
+            // if (invalidChars.Count > 0)
+            //     throw new ArgumentException($"{input} Parse error: {INVALID_DIGIT_MESSAGE}: {string.Join(INVALID_DIGIT_SEPARATOR, 
+            //         invalidChars.Select(c => string.Format(DIGIT_FORMAT, c)))"});
+            
+            if (invalidChars.Count > 0)
+            {
+                throw new ArgumentException(
+                    // $"'{input}' {INVALID_DIGIT_MESSAGE} '{String.Join(", ", invalidChars.Select(c => $"'{c}'"))}' "
+                    String.Format(
+                        INVALID_DIGITS_FORMAT,
+                        input,
+                        String.Join(", ", invalidChars.Select(c => $"'{c}'"))
+                    )
+                );
+                /* Продовжити рефакторинг hardcoded string
+                 * Винести до констант роздільник неправильних цифр (у
+                 * повідомленні про помилку парсингу), а також
+                 * формат перетворення цифр c => $"'{c}'"
+                 */
+            }
+        }
+
+        private static void CheckCompositionOrThrow(string input)
+        {
+            int maxDigit = 0;
+            bool flag = false;
+            int firstDigitIndex = input.StartsWith(MINUS_SIGN) ? 1 : 0;
+
+            for (int i = input.Length - 1; i >= firstDigitIndex; i--)
+            {
+                int current = DigitValue(input[i]);
+
+                if (current > maxDigit)
+                    maxDigit = current;
+                if (current < maxDigit)
+                {
+                    if (flag)
+                        throw new ArgumentException(INVALID_ROMAN_STRUCTURE_MESSAGE);
+
+                    flag = true;
+                }
+                else
+                    flag = false;
+            }
+        }
+
+        public static RomanNumber Parse(string input)
+        {
+            input = input?.Trim() ?? "";
+
+            CheckValidityOrThrow(input);
+            CheckCompositionOrThrow(input);
+
+            int firstDigitIndex = input.StartsWith(MINUS_SIGN) ? 1 : 0;
             int result = 0;
             int prev = 0;
-            int first_digit_index = input.StartsWith("-") ? 1 : 0;
-            List<char> invalid_сhars = new List<char>();
 
-            for (int i = input.Length - 1; i >= first_digit_index; i--)
+            for (int i = input.Length - 1; i >= firstDigitIndex; i--)
             {
-
-                int current = input[i] switch
-                {
-                    'I' => 1,
-                    'V' => 5,
-                    'X' => 10,
-                    'L' => 50,
-                    'C' => 100,
-                    'D' => 500,
-                    'M' => 1000,
-                    'N' => 0,
-                    _ => throw new ArgumentException($"'{input}' Pars error Invalid digit: '{input[i]}'")
-                };
-
-                if (current == 0)
-                    invalid_сhars.Add(input[i]);
+                int current = DigitValue(input[i]);
 
                 result += (current < prev) ? -current : current;
                 prev = current;
             }
 
-            if (invalid_сhars.Count > 0)
-            {
-                string invalid_сhars_str = new string(invalid_сhars.ToArray());
-                throw new ArgumentException($"Invalid Roman numeral character(s): {invalid_сhars_str}");
-            }
-
-            return new RomanNumber() { Value = result * (1 - (first_digit_index << 1)) };
+            return new RomanNumber { Value = firstDigitIndex == 0 ? result : -result };
         }
 
-        public override string ToString() 
+        public override string ToString()
         {
             if (Value == 0)
-                return "N";
+                return ZERO_DIGIT.ToString();
 
-            Dictionary<int, string> ranges = new Dictionary<int, string>() 
+            Dictionary<int, string> ranges = new Dictionary<int, string>
             {
                 { 1000, "M" },
                 { 900, "CM" },
@@ -106,7 +166,8 @@ namespace App
                 }
             }
 
-            return Value < 0 ? $"-{result}" : result.ToString();
+            return Value < 0 ? $"{MINUS_SIGN}{result}" : result.ToString();
         }
     }
+
 }
